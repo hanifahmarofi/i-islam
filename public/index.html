@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="./styles.css" rel="stylesheet">
+  <title>Tailwind Test</title>
+</head>
+<body class="min-h-screen grid place-items-center bg-gray-100">
+  <h1 class="text-3xl font-bold text-blue-600">Hello Tailwind</h1>
+
+  <!-- in public/index.html -->
+<p id="apiStatus" class="text-center mt-10 text-gray-600">Checking API...</p>
+<script>
+  (function () {
+    const statusEl = document.getElementById('apiStatus');
+    let lastText = null;
+    let polling = false;
+
+    async function checkOnce() {
+      try {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 4000); // 4s timeout
+        const res = await fetch('http://127.0.0.1:8000/api/health', {
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        clearTimeout(id);
+
+        const ok = res.ok;
+        const text = ok ? 'API: OK ✅' : `API: Error ${res.status}`;
+        if (text !== lastText) {
+          statusEl.textContent = text;
+          lastText = text;
+        }
+      } catch (e) {
+        const text = 'API: Unreachable ❌';
+        if (text !== lastText) {
+          statusEl.textContent = text;
+          lastText = text;
+        }
+      }
+    }
+
+    async function startPolling() {
+      if (polling) return; // prevent multiple intervals
+      polling = true;
+      await checkOnce();                  // first check
+      setInterval(checkOnce, 5000);       // then every 5s
+    }
+
+    // optional: recheck when tab becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkOnce();
+    });
+
+    startPolling();
+  })();
+</script>
+
+
+</body>
+</html>
