@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Lesson;
 use Illuminate\Support\Facades\Auth;
 use App\Models\LiveQuiz;
+use App\Models\Activity; // <--- 1. ADD THIS IMPORT
 
 class QuizController extends Controller
 {
@@ -19,7 +20,6 @@ class QuizController extends Controller
     }
 
     // Submit the Lesson Quiz
-    // RENAMED from 'submit' to 'submitLesson'
     public function submitLesson(Request $request, $lesson_id)
     {
         // 1. Get the lesson and questions
@@ -44,6 +44,15 @@ class QuizController extends Controller
         if ($totalQuestions > 0 && $correctCount === $totalQuestions) {
             $user = Auth::user();
             $user->increment('xp', 50); // Add XP
+
+            // --- 2. ADD ACTIVITY LOG HERE (For Lesson Quiz) ---
+            Activity::create([
+                'user_id' => Auth::id(),
+                'description' => 'aced the quiz for lesson: ' . $lesson->title,
+                'type' => 'quiz',
+            ]);
+            // --------------------------------------------------
+
             return redirect()->route('dashboard')->with('success', 'Alhamdulillah, you get 50XP! 🌟');
         } else {
             return redirect()->route('dashboard')->with('error', "Allahu, you didn't get all correct! You got $correctCount/$totalQuestions.");
@@ -72,42 +81,48 @@ class QuizController extends Controller
     }
 
     // Submit a Live Quiz
-    // RENAMED from 'submit' to 'submitLive'
     public function submitLive(Request $request, $id)
-{
-    $quiz = LiveQuiz::with('questions')->findOrFail($id);
-    $score = 0;
-    $total = $quiz->questions->count();
-    $answers = $request->input('answers');
+    {
+        $quiz = LiveQuiz::with('questions')->findOrFail($id);
+        $score = 0;
+        $total = $quiz->questions->count();
+        $answers = $request->input('answers');
 
-    // Calculate Score
-    foreach ($quiz->questions as $question) {
-        $userAnswer = $answers[$question->id] ?? null;
-        if ($userAnswer === $question->correct_answer) {
-            $score++;
+        // Calculate Score
+        foreach ($quiz->questions as $question) {
+            $userAnswer = $answers[$question->id] ?? null;
+            if ($userAnswer === $question->correct_answer) {
+                $score++;
+            }
         }
+
+        // --- SAVE TO DATABASE ---
+        // Check if they already played to prevent duplicates
+        $existingResult = \App\Models\LiveQuizResult::where('live_quiz_id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$existingResult) {
+            \App\Models\LiveQuizResult::create([
+                'live_quiz_id' => $id,
+                'user_id' => Auth::id(),
+                'score' => $score,
+                'total_questions' => $total,
+            ]);
+            
+            // Optional: Give XP
+            Auth::user()->increment('xp', $score * 10); 
+
+            // --- 3. ADD ACTIVITY LOG HERE (For Live Quiz) ---
+            Activity::create([
+                'user_id' => Auth::id(),
+                'description' => 'completed the live quiz: ' . $quiz->title,
+                'type' => 'quiz',
+            ]);
+            // ------------------------------------------------
+        }
+        // ----------------------------------
+
+        return redirect()->route('dashboard')->with('success', "Quiz Submitted! You scored $score / $total");
     }
-
-    // --- NEW PART: SAVE TO DATABASE ---
-    // Check if they already played to prevent duplicates
-    $existingResult = \App\Models\LiveQuizResult::where('live_quiz_id', $id)
-        ->where('user_id', Auth::id())
-        ->first();
-
-    if (!$existingResult) {
-        \App\Models\LiveQuizResult::create([
-            'live_quiz_id' => $id,
-            'user_id' => Auth::id(),
-            'score' => $score,
-            'total_questions' => $total,
-        ]);
-        
-        // Optional: Give XP
-        Auth::user()->increment('xp', $score * 10); 
-    }
-    // ----------------------------------
-
-    return redirect()->route('dashboard')->with('success', "Quiz Submitted! You scored $score / $total");
-}
-
 }

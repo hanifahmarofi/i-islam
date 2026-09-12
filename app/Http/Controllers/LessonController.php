@@ -44,10 +44,12 @@ class LessonController extends Controller
         Activity::create([
             'user_id' => $user->id,
             'description' => "completed the lesson: " . $lesson->title, 
-            'type' => 'lesson'
+            'type' => 'lesson',
         ]);
 
         // 5. Redirect
         return redirect()->route('dashboard')->with('success', 'Lesson Completed! You earned 50 XP!');
     }
+
+
 }

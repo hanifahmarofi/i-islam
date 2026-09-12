@@ -34,6 +34,7 @@ class User extends Authenticatable
         'role',
         'points',
         'profile_picture',
+        'is_blocked',
     ];
 
     /**

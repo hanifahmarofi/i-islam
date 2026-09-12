@@ -16,6 +16,9 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\ArcadeQuizController;
+use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\FeedbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -230,4 +233,31 @@ Route::middleware(['auth'])->group(function () {
     // NEW: Create Lesson Routes
     Route::get('/teacher/lesson/create', [TeacherController::class, 'createLesson'])->name('teacher.lesson.create');
     Route::post('/teacher/lesson/store', [TeacherController::class, 'storeLesson'])->name('teacher.lesson.store');
+});
+
+Route::get('/arcade/quiz', [ArcadeQuizController::class, 'index'])->name('arcade.quiz.index');
+Route::get('/arcade/quiz/generate', [ArcadeQuizController::class, 'generate'])->name('arcade.quiz.generate');
+
+Route::get('/test-gemini', function () {
+    $apiKey = env('GEMINI_API_KEY');
+    
+    // Ask Google: "What models are available for me?"
+    $response = Illuminate\Support\Facades\Http::withoutVerifying()
+        ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
+    
+    return $response->json();
+});
+
+Route::post('/feedback', [FeedbackController::class, 'store'])->middleware('auth');
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    // ... existing routes ...
+    
+    // User Actions
+    Route::post('/user/{id}/block', [AdminController::class, 'toggleBlockUser'])->name('admin.user.block');
+    Route::delete('/user/{id}/delete', [AdminController::class, 'deleteUser'])->name('admin.user.delete');
+
+    // Lesson Actions
+    Route::delete('/lesson/{id}/archive', [AdminController::class, 'archiveLesson'])->name('admin.lesson.archive');
+    Route::delete('/lesson/{id}/force-delete', [AdminController::class, 'forceDeleteLesson'])->name('admin.lesson.forceDelete');
 });

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard - i-Islam</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -97,6 +98,17 @@
 
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         @keyframes popIn { from { opacity: 0; transform: translateY(20px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* --- FEEDBACK BLOB ANIMATION --- */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
     </style>
 </head>
 <body class="relative min-h-screen pb-20">
@@ -173,7 +185,8 @@
                 </form>
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             
             <a href="#available-lessons" class="action-card card-blue p-6 rounded-2xl flex flex-col justify-between group h-48">
                 <div>
@@ -209,6 +222,37 @@
             </a>
         </div>
 
+        <div class="mb-12 bg-gray-800/80 rounded-2xl p-6 relative overflow-hidden shadow-lg border border-gray-700 backdrop-blur-sm">
+            <div class="flex flex-col md:flex-row items-center justify-between z-10 relative">
+                
+                <div class="mb-4 md:mb-0 text-center md:text-left">
+                    <h3 class="text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
+                        <i class="fa-solid fa-star text-yellow-400"></i> Rate your experience!
+                    </h3>
+                    <p class="text-gray-300 text-sm mt-1">How many stars would you give i-Islam today?</p>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    <div class="flex space-x-2" id="star-container">
+                        @for ($i = 1; $i <= 5; $i++)
+                            <button onclick="submitRating({{ $i }})" 
+                                    onmouseenter="hoverRating({{ $i }})" 
+                                    onmouseleave="resetRating()"
+                                    class="star-btn transition transform hover:scale-110 focus:outline-none p-1">
+                                <svg class="w-8 h-8 md:w-10 md:h-10 text-gray-600 fill-current transition-colors duration-200" 
+                                     id="star-{{ $i }}" 
+                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/>
+                                </svg>
+                            </button>
+                        @endfor
+                    </div>
+                    <p id="rating-message" class="text-yellow-400 text-sm mt-2 font-semibold h-5 transition-all duration-300"></p>
+                </div>
+            </div>
+            
+            <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-green-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob"></div>
+        </div>
         <div id="available-lessons" class="pt-4 pb-20"> 
             
             <h3 class="text-3xl font-bold text-white mb-8 flex items-center gap-3 drop-shadow-md">
@@ -255,15 +299,18 @@
     </form>
 
     <script>
+        // Existing Click Sound Script
         const clickSound = new Audio("{{ asset('audio/click.mp3') }}");
         document.addEventListener('click', function(e) {
-            if (e.target.closest('a, button, .action-card, .glass-card')) {
+            // Updated to include .star-btn so the click sound works on stars too
+            if (e.target.closest('a, button, .action-card, .glass-card, .star-btn')) { 
                 const sound = clickSound.cloneNode();
                 sound.volume = 0.4;
                 sound.play().catch(err => {});
             }
         });
 
+        // Existing Particle Script
         const particleContainer = document.getElementById('particles');
         for(let i=0; i<35; i++) {
             const p = document.createElement('div');
@@ -275,6 +322,76 @@
             p.style.animationDuration = Math.random() * 8 + 4 + 's';
             p.style.animationDelay = Math.random() * 5 + 's';
             particleContainer.appendChild(p);
+        }
+
+        // --- NEW FEEDBACK LOGIC ---
+        let currentRating = 0;
+
+        function hoverRating(value) {
+            if (currentRating > 0) return; // Lock hover if already selected
+            const stars = document.querySelectorAll('.star-btn svg');
+            const message = document.getElementById('rating-message');
+            
+            stars.forEach((star, index) => {
+                if (index < value) {
+                    star.classList.remove('text-gray-600');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-600');
+                }
+            });
+            
+            const messages = ["Needs Work", "Okay", "Good!", "Great!", "Awesome!"];
+            message.innerText = messages[value - 1];
+        }
+
+        function resetRating() {
+            if (currentRating === 0) {
+                const stars = document.querySelectorAll('.star-btn svg');
+                stars.forEach(star => {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-600');
+                });
+                document.getElementById('rating-message').innerText = "";
+            }
+        }
+
+        function submitRating(value) {
+            currentRating = value;
+            
+            // Visual Update immediately for better UX
+            const stars = document.querySelectorAll('.star-btn svg');
+            stars.forEach((star, index) => {
+                if (index < value) {
+                    star.classList.remove('text-gray-600');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-600');
+                }
+            });
+
+            // Send to backend
+            fetch('/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ rating: value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('star-container');
+                container.classList.add('pointer-events-none', 'opacity-75');
+                document.getElementById('rating-message').innerText = "Shukran! (Thank You)";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('rating-message').innerText = "Error saving!";
+                currentRating = 0; // Reset on error
+            });
         }
     </script>
 

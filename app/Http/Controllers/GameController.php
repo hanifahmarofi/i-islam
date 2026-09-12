@@ -28,6 +28,12 @@ class GameController extends Controller
         // Optional: Also give XP if you use it
         // $user->increment('xp', 10);
 
+        Activity::create([
+    'user_id' => auth()->id(),
+    'description' => 'has completed the Hangman game',
+    'type' => 'game',   // <--- We added this
+    ]);
+
         return response()->json([
             'status' => 'rewarded',
             'message' => "+$pointsToAdd Stars Added!",

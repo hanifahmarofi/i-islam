@@ -18,7 +18,7 @@
             justify-content: center;
             padding: 20px;
             
-            /* --- CHANGED HERE: Allow scrolling --- */
+            /* --- Allow scrolling --- */
             overflow-y: auto;  /* Enable vertical scroll */
             overflow-x: hidden; /* Hide horizontal scroll */
             
@@ -152,6 +152,8 @@
         .neon-yellow { animation: border-pulse-yellow 2s infinite; }
         .neon-red { animation: border-pulse-red 2s infinite; }
         .neon-blue { animation: border-pulse-blue 2s infinite; }
+        /* Added the Purple class for specificity if needed later */
+        .neon-purple { animation: border-pulse-purple 2s infinite; }
 
         @keyframes border-pulse-yellow {
             0%, 100% { border-color: #facc15; box-shadow: 0 0 10px #facc15; }
@@ -164,6 +166,11 @@
         @keyframes border-pulse-blue {
             0%, 100% { border-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
             50% { border-color: #93c5fd; box-shadow: 0 0 25px #3b82f6; }
+        }
+        /* --- ADDED MISSING PURPLE ANIMATION --- */
+        @keyframes border-pulse-purple {
+            0%, 100% { border-color: #a855f7; box-shadow: 0 0 10px #a855f7; }
+            50% { border-color: #e9d5ff; box-shadow: 0 0 25px #a855f7; }
         }
 
         .neon-card:hover { transform: scale(1.05) translateY(-10px); background: rgba(0,0,0,0.6); }
@@ -228,12 +235,12 @@
                 <p class="text-sm text-gray-300 font-mono">Connect the knowledge fragments.</p>
             </a>
             
-             <a href="{{ route('games.quiz') }}" class="neon-card neon-blue group" style="border-color: #a855f7; animation: border-pulse-purple 2s infinite;">
+             <a href="{{ route('arcade.quiz.index') }}" class="neon-card neon-purple group" style="border-color: #a855f7; animation: border-pulse-purple 2s infinite;">
                 <div class="icon-box text-purple-400">
-                    <i class="fa-solid fa-question-circle"></i>
+                    <i class="fa-solid fa-brain"></i>
                 </div>
-                <h3 class="text-2xl font-bold text-purple-100 font-mono">QUIZ</h3>
-                <p class="text-sm text-gray-300 font-mono">Test your knowledge.</p>
+                <h3 class="text-2xl font-bold text-purple-100 font-mono">AI QUIZ</h3>
+                <p class="text-sm text-gray-300 font-mono">Infinite AI-generated questions.</p>
             </a>
 
         </div>

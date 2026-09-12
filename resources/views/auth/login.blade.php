@@ -48,12 +48,10 @@
 </head>
 <body class="text-white min-h-screen flex items-center justify-center font-sans relative">
 
-    <!-- THE DYNAMIC BACKGROUND -->
     <div class="starry-background" id="starryBg"></div>
 
     <div class="w-full max-w-md p-8 glass-card rounded-2xl relative z-10">
         
-        <!-- Back Button -->
         <a href="{{ route('home') }}" class="text-emerald-400 hover:text-white mb-6 inline-block transition flex items-center gap-2">
             <i class="fa-solid fa-arrow-left"></i> Back to Home
         </a>
@@ -69,8 +67,8 @@
                 <label class="block text-sm font-bold mb-2 text-emerald-200">Email Address</label>
                 <input type="email" name="email" required 
                     class="w-full px-4 py-3 rounded-lg bg-black/30 border border-white/10 focus:border-emerald-400 focus:outline-none transition text-white placeholder-white/30"
-                    placeholder="student@school.edu">
-            </div>
+                    placeholder="student@school.edu"
+                    value="{{ old('email') }}"> </div>
 
             <div>
                 <div class="flex justify-between items-center mb-2">
@@ -80,16 +78,22 @@
                     <input type="password" name="password" id="login-password" required 
                         class="w-full px-4 py-3 rounded-lg bg-black/30 border border-white/10 focus:border-emerald-400 focus:outline-none transition text-white placeholder-white/30 pr-10"
                         placeholder="••••••••">
-                    <!-- Eye Icon -->
                     <button type="button" onclick="togglePassword('login-password', 'login-eye')" class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-white">
                         <i id="login-eye" class="fa-solid fa-eye"></i>
                     </button>
                 </div>
-                <!-- Forgot Password Link -->
                 <div class="text-right mt-2">
                     <a href="{{ route('password.request') }}" class="text-xs text-emerald-400 hover:text-white transition underline">Forgot Password?</a>
                 </div>
             </div>
+
+            @error('email')
+                <div class="text-center">
+                    <p class="text-red-400 text-sm font-semibold animate-pulse">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}
+                    </p>
+                </div>
+            @enderror
 
             <button type="submit" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] transition transform hover:scale-105">
                 Log In 🚀
@@ -102,7 +106,6 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT -->
     <script>
         // --- 1. STAR GENERATOR ---
         function createStars() {

@@ -118,4 +118,43 @@ class AdminController extends Controller
          ]);
          return redirect()->route('login');
     }
+
+// --- USER MANAGEMENT ---
+
+public function toggleBlockUser($id)
+{
+    $user = \App\Models\User::findOrFail($id);
+    
+    // Toggle the status (if true, make false. if false, make true)
+    $user->is_blocked = !$user->is_blocked;
+    $user->save();
+
+    $status = $user->is_blocked ? 'BLOCKED 🚫' : 'UNBLOCKED ✅';
+    return back()->with('success', "User has been $status.");
+}
+
+public function deleteUser($id)
+{
+    $user = \App\Models\User::findOrFail($id);
+    $user->delete(); // Permanently deletes user
+    return back()->with('success', 'User permanently deleted.');
+}
+
+// --- LESSON MANAGEMENT ---
+
+public function archiveLesson($id)
+{
+    $lesson = \App\Models\Lesson::findOrFail($id);
+    $lesson->delete(); // Soft Delete (Archive)
+    return back()->with('success', 'Lesson archived successfully.');
+}
+
+public function forceDeleteLesson($id)
+{
+    // We use withTrashed() to find it even if it's already archived
+    $lesson = \App\Models\Lesson::withTrashed()->findOrFail($id);
+    $lesson->forceDelete(); // Permanent Delete
+    return back()->with('success', 'Lesson PERMANENTLY deleted.');
+}
+
 }
